@@ -26,8 +26,8 @@ class KeywordData(BaseModel):
     serp_features: Optional[List[str]] = None
     trend: Optional[str] = None
     click_potential: Optional[str] = None
-    content_references: Optional[str] = None
-    competitors: Optional[List[str]] = None
+    content_references: Optional[dict[str, str]] = None
+    competitors: Optional[dict[str, str]] = None
 
     def to_prompt_context(self) -> dict:
         """Convert keyword data to a format suitable for prompt context.
@@ -37,9 +37,7 @@ class KeywordData(BaseModel):
         """
         return {
             "primary_keyword": self.keyword,
-            "secondary_keywords": [self.seed_keyword] if self.seed_keyword else [],
-            "related_keywords": self.tags or [],
-            "topic": self.topic,
+            "importance_in_cluster": self.importance_in_cluster,
             "intent": self.intent or "informational",
             "volume": self.volume or 0,
             "competition": self.competitive_density or 0.0,
@@ -64,14 +62,14 @@ class BlogArticle(BaseModel):
     slug: str
     publication_date: str = Field(default_factory=lambda: datetime.now().strftime("%d/%m/%Y"))
     reading_time: str
-    table_of_contents: str
+    table_of_contents: Optional[str] = None
     content: str
     article_type: str
     article_types_secondary: List[str]
     article_summary: str
     title_tag: str
     meta_description: str
-    keyword_data: KeywordData
+    cluster_keyword_data: List[KeywordData]
     image_details: List[ImageDetail] = []
 
     def to_json_dict(self) -> dict:
@@ -85,7 +83,6 @@ class BlogArticle(BaseModel):
             "Slug": self.slug,
             "Date de publication": self.publication_date,
             "Durée de lecture": self.reading_time,
-            "Table des matières": self.table_of_contents,
             "Contenu article": self.content,
             "Type d'article": self.article_type,
             "Type d'article 2-8": ", ".join(self.article_types_secondary),

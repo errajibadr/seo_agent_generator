@@ -4,7 +4,6 @@ import time
 from typing import Any, Dict, Optional
 
 import httpx
-from pydantic import HttpUrl
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.config import get_config

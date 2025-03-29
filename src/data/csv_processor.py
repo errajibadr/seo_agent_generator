@@ -4,12 +4,9 @@ import csv
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-import ibis
 import pandas as pd
-from ibis import _
 
 from src.data.models import KeywordData
-from src.utils.ibis_utils import normalize_column_name
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -193,34 +190,7 @@ class CSVProcessor:
 
         return df
 
-    # def read_csv_ibis(self) -> List[KeywordData]:
-    #     """Read and process the CSV file using ibis.
-
-    #     Returns:
-    #         List of KeywordData objects
-    #     """
-    #     con = ibis.connect("duckdb://")
-    #     keyword_data: ibis.expr.types.relations.Table = con.sql(  # type: ignore
-    #         f"SELECT * FROM read_csv('{self.input_path}')"
-    #     )
-    #     keyword_data = keyword_data.rename(normalize_column_name)
-
-    #     # Define a window partitioned by page
-    #     window = ibis.window(group_by=keyword_data.page)
-
-    #     # Calculate importance_in_cluster as volume / sum(volume) within each page
-    #     keyword_data_result = keyword_data.mutate(
-    #         importance_in_cluster=keyword_data.volume / keyword_data.volume.sum().over(window)
-    #     )
-
-    #     # Get the results
-    #     return (
-    #         keyword_data_result.execute()
-    #         .apply(lambda row: KeywordData(**row.to_dict()), axis=1)
-    #         .tolist()
-    #     )
-
-    def read_csv(self) -> List[KeywordData]:
+    def read_csv(self) -> Dict[str, List[KeywordData]]:
         """Read and process the CSV file.
 
         Returns:
@@ -240,20 +210,29 @@ class CSVProcessor:
             df = self._process_numeric_fields(df)
             df = self._process_string_fields(df)
 
+            df["importance_in_cluster"] = df.apply(
+                lambda row: row["volume"] / df[df["page"] == row["page"]]["volume"].sum()
+                if not pd.isna(row["volume"]) and df[df["page"] == row["page"]]["volume"].sum() > 0
+                else 0,
+                axis=1,
+            )
+
             # Convert to KeywordData objects
-            keyword_data_list = []
+            keyword_data_dict = {}
             for _, row in df.iterrows():
                 try:
                     data_dict = row.to_dict()
                     # Convert any remaining NaN values to None
                     keyword_data = KeywordData(**data_dict)
-                    keyword_data_list.append(keyword_data)
+                    if keyword_data.page not in keyword_data_dict:
+                        keyword_data_dict[keyword_data.page] = []
+                    keyword_data_dict[keyword_data.page].append(keyword_data)
                 except Exception as e:
                     logger.error(f"Error processing row: {e}")
                     logger.debug(f"Row data: {row.to_dict()}")
 
-            logger.info(f"Processed {len(keyword_data_list)} keyword entries")
-            return keyword_data_list
+            logger.info(f"Processed {len(keyword_data_dict)} keyword entries")
+            return keyword_data_dict
 
         except Exception as e:
             logger.error(f"Error reading CSV: {e}")

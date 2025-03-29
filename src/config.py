@@ -66,7 +66,7 @@ class Config(BaseModel):
     cache: CacheConfig = Field(default_factory=CacheConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     default_model: str = Field(
-        default_factory=lambda: os.environ.get("DEFAULT_MODEL", "anthropic/claude-3-opus-20240229")
+        default_factory=lambda: os.environ.get("DEFAULT_MODEL", "anthropic/claude-3.7-sonnet")
     )
     default_model_params: Dict[str, Any] = Field(default_factory=dict)
 
@@ -78,7 +78,8 @@ def get_config() -> Config:
     Returns:
         Config: Application configuration
     """
-    return Config()
+    config = Config()
+    return config
 
 
 def validate_config() -> Optional[str]:

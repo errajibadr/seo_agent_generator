@@ -25,7 +25,22 @@ class ContentWriter:
         self.service = openrouter_service or OpenRouterService()
         self.config = get_config()
 
-    async def generate_blog(self, keyword_data: KeywordData) -> BlogArticle:
+    def cluster_to_prompt_context(self, cluster_name: str, cluster_data: List[KeywordData]) -> dict:
+        """Convert cluster data to prompt context.
+
+        Args:
+            cluster_name: Cluster name
+            cluster_data: Cluster data
+        """
+        prompt_context = {
+            "cluster_name": cluster_name,
+            "keywords": [keyword_data.to_prompt_context() for keyword_data in cluster_data],
+        }
+        return prompt_context
+
+    async def generate_blog(
+        self, cluster_name: str, cluster_data: List[KeywordData]
+    ) -> BlogArticle:
         """Generate a blog article based on keyword data.
 
         Args:
@@ -35,7 +50,7 @@ class ContentWriter:
             Generated blog article
         """
         # Format the prompt with keyword data
-        prompt_context = keyword_data.to_prompt_context()
+        prompt_context = self.cluster_to_prompt_context(cluster_name, cluster_data)
         formatted_prompt = blog_post_prompt.replace(
             "{keywords}", json.dumps(prompt_context, ensure_ascii=False)
         )
@@ -47,12 +62,12 @@ class ContentWriter:
             "The output must be in valid JSON format following the structure specified in the prompt."
         )
 
-        logger.info(f"Generating blog for keyword: {keyword_data.keyword}")
+        logger.info(f"Generating blog for cluster: {cluster_name}")
         content = await self.service.generate_content(
             prompt=formatted_prompt,
             system_prompt=system_prompt,
             temperature=0.7,
-            max_tokens=4000,
+            max_tokens=5000,
         )
 
         # Extract JSON content
@@ -79,8 +94,8 @@ class ContentWriter:
             article_summary=blog_json.get("Résumé de l'article", ""),
             title_tag=blog_json.get("Balise title", ""),
             meta_description=blog_json.get("META DESCRIPTION", ""),
-            keyword_data=keyword_data,
             image_details=image_details,
+            cluster_keyword_data=cluster_data,
         )
 
     def _extract_image_details(self, content: str) -> List[ImageDetail]:

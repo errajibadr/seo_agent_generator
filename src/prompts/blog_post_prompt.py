@@ -37,6 +37,7 @@ STRUCTURE DE CONTENU :
    - Mots-clés naturellement intégrés
 
 3. Corps de l'article (75% du contenu)
+   - L'article doit être assez concis pour être lu en une fois (max 1500 mots)
    - 3 sections principales maximum (H2)
    - Sous-sections pertinentes (H3)
    - Pour chaque section :
@@ -46,10 +47,9 @@ STRUCTURE DE CONTENU :
      * Éléments visuels suggérés
    - Inclure :
      * Au moins 2 listes à puces
-     * 1-2 citations expertes (blockquote)
-     * Données statistiques récentes
-     * Exemples locaux/géographiques
-     * FAQ structurée (3-5 questions)
+     * 1-2 citations expertes (blockquote) [seulement si les citations sont pertinentes]
+     * Données statistiques récentes [seulement si les données sont pertinentes]
+     * Exemples locaux/géographiques [seulement si les exemples sont pertinents]
 
 4. Conclusion (15% du contenu)
    - Résumé des points clés
@@ -62,6 +62,8 @@ OPTIMISATION SEO/GEO 2025 :
    - Transactionnel
    - Local/Géographique
    - Navigationnel
+   - Tu auras l'intention de recherche pour chaque mot-clé
+   - Tu dois intégrer l'intention de recherche dans le contenu.
 
 2. Semantic Search
    - Entités et relations
@@ -80,6 +82,14 @@ OPTIMISATION SEO/GEO 2025 :
    - Suggestions d'optimisation images
    - Mise en page fluide
    - Temps de lecture estimé
+   
+5. Mots-clés à intégrer
+   - Tu recevrais une liste de mots-clés à intégrer dans le contenu.
+   - Tu dois intégrer ces mots-clés de manière naturelle et non intrusive.
+   - Tu dois éviter d'utiliser les mêmes mots-clés dans plusieurs sections.
+   - Tu dois éviter d'utiliser les mêmes mots-clés dans des positions similaires.
+   - Tu dois éviter d'utiliser les mêmes mots-clés dans des contextes similaires.
+   - Mets de l'importance sur les mots-clés les plus importants. (importance_in_cluster)
 
 FORMAT JSON REQUIS :
 {
@@ -87,7 +97,6 @@ FORMAT JSON REQUIS :
   "Slug": "string - URL optimisée SEO",
   "Date de publication": "string - Format DD/MM/YYYY",
   "Durée de lecture": "string - X minutes",
-  "Table des matières": "string - HTML avec ancres",
   "Contenu article": "string - HTML complet et structuré",
   "Type d'article": "string - Catégorie principale",
   "Type d'article 2-8": "string - Catégories secondaires",

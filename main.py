@@ -10,7 +10,7 @@ from typing import List, Optional
 
 from src.agents.content_writer import ContentWriter
 from src.agents.image_generator import ImageGenerator
-from src.config import get_config, validate_config
+from src.config import get_config
 from src.data.csv_processor import CSVProcessor
 from src.data.models import BlogArticle, KeywordData
 from src.utils.logger import get_logger
@@ -18,16 +18,18 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-async def process_keyword(
-    keyword_data: KeywordData,
+async def process_cluster(
+    cluster_name: str,
+    cluster_data: List[KeywordData],
     content_writer: ContentWriter,
     image_generator: ImageGenerator,
     output_dir: Path,
 ) -> Optional[BlogArticle]:
-    """Process a single keyword.
+    """Process a single cluster.
 
     Args:
-        keyword_data: Keyword data
+        cluster_name: Cluster name
+        cluster_data: Cluster data
         content_writer: Content writer agent
         image_generator: Image generator agent
         output_dir: Output directory
@@ -37,8 +39,8 @@ async def process_keyword(
     """
     try:
         # Generate blog content
-        logger.info(f"Generating content for keyword: {keyword_data.keyword}")
-        blog_article = await content_writer.generate_blog(keyword_data)
+        logger.info(f"Generating content for cluster: {cluster_name}")
+        blog_article = await content_writer.generate_blog(cluster_name, cluster_data)
 
         # Generate images
         logger.info(f"Generating images for blog: {blog_article.title}")
@@ -54,19 +56,19 @@ async def process_keyword(
         return blog_article
 
     except Exception as e:
-        logger.error(f"Error processing keyword {keyword_data.keyword}: {e}")
+        logger.error(f"Error processing cluster {cluster_name}: {e}")
         return None
 
 
 async def process_batch(
-    keyword_data_list: List[KeywordData],
+    keyword_data_dict: dict[str, List[KeywordData]],
     output_dir: Path,
-    max_concurrent: int = 3,
+    max_concurrent: int = 1,
 ) -> None:
-    """Process a batch of keywords.
+    """Process a batch of clusters.
 
     Args:
-        keyword_data_list: List of keyword data
+        keyword_data_dict: Dictionary of cluster name to list of keyword data
         output_dir: Output directory
         max_concurrent: Maximum number of concurrent tasks
     """
@@ -79,18 +81,23 @@ async def process_batch(
     image_generator = ImageGenerator()
 
     # Process in batches to avoid overwhelming APIs
-    total = len(keyword_data_list)
-    logger.info(f"Processing {total} keywords with max {max_concurrent} concurrent tasks")
+    total = len(keyword_data_dict)
+    logger.info(f"Processing {total} Clusters with max {max_concurrent} concurrent tasks")
 
     # Create semaphore to limit concurrency
     semaphore = asyncio.Semaphore(max_concurrent)
 
-    async def process_with_semaphore(kw_data):
+    async def process_with_semaphore(cluster_name: str, cluster_data: List[KeywordData]):
         async with semaphore:
-            return await process_keyword(kw_data, content_writer, image_generator, output_dir)
+            return await process_cluster(
+                cluster_name, cluster_data, content_writer, image_generator, output_dir
+            )
 
     # Create tasks
-    tasks = [process_with_semaphore(kw_data) for kw_data in keyword_data_list]
+    tasks = [
+        process_with_semaphore(cluster_name, cluster_data)
+        for cluster_name, cluster_data in keyword_data_dict.items()
+    ]
 
     # Run tasks and get results
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -186,15 +193,20 @@ async def async_main():
         try:
             # Read CSV
             csv_processor = CSVProcessor(input_path)
-            keyword_data_list = csv_processor.read_csv()
-            keyword_data_list_ibis = csv_processor.read_csv_ibis()
+            keyword_data_dict = csv_processor.read_csv()
 
-            if not keyword_data_list:
+            if not keyword_data_dict:
                 logger.error("No valid keyword data found in CSV")
                 sys.exit(1)
 
+            first_cluster_name = next(iter(keyword_data_dict))
+            first_cluster_data = keyword_data_dict[first_cluster_name]
             # Process keywords
-            await process_batch(keyword_data_list, output_path, max_concurrent=args.max_concurrent)
+            await process_batch(
+                {first_cluster_name: first_cluster_data},
+                output_path,
+                max_concurrent=args.max_concurrent,
+            )
 
         except Exception as e:
             logger.error(f"Error processing file: {e}")

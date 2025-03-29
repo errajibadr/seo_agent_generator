@@ -1,7 +1,8 @@
 """Image generator agent for creating images based on descriptions."""
 
 import asyncio
-from typing import Optional
+import re
+from typing import Dict, Optional
 
 from pydantic import HttpUrl
 
@@ -75,7 +76,79 @@ class ImageGenerator:
         # Update blog article with generated images
         blog_article.image_details = valid_image_details
 
+        # Replace image placeholders in content with actual URLs
+        blog_article.content = self._replace_image_placeholders(blog_article)
+
         return blog_article
+
+    def _replace_image_placeholders(self, blog_article: BlogArticle) -> str:
+        """Replace image placeholders in blog content with generated image URLs.
+
+        Args:
+            blog_article: Blog article with image details and content
+
+        Returns:
+            Updated blog content with actual image URLs
+        """
+        content = blog_article.content
+
+        # Create a mapping of alt text to image details for quick lookup
+        alt_to_image: Dict[str, ImageDetail] = {
+            img.alt_text: img for img in blog_article.image_details if img.url
+        }
+
+        if not alt_to_image:
+            logger.warning("No valid image URLs to replace in content")
+            return content
+
+        # Find all img tags and replace src attributes with actual URLs
+        def replace_img_src(match):
+            alt_text = match.group(1)
+            img_tag = match.group(0)
+
+            if alt_text in alt_to_image:
+                # Image URL found, replace or add src attribute
+                img_detail = alt_to_image[alt_text]
+
+                # Check if there's an existing src attribute to replace
+                if 'src="' in img_tag:
+                    new_img_tag = re.sub(r'src="[^"]*"', f'src="{img_detail.url}"', img_tag)
+                else:
+                    # Add src attribute before closing bracket
+                    new_img_tag = img_tag.replace(">", f' src="{img_detail.url}">')
+
+                # Add width and height if available
+                if img_detail.width and img_detail.height:
+                    if 'width="' in new_img_tag:
+                        new_img_tag = re.sub(
+                            r'width="[^"]*"', f'width="{img_detail.width}"', new_img_tag
+                        )
+                    else:
+                        new_img_tag = new_img_tag.replace(">", f' width="{img_detail.width}">')
+
+                    if 'height="' in new_img_tag:
+                        new_img_tag = re.sub(
+                            r'height="[^"]*"', f'height="{img_detail.height}"', new_img_tag
+                        )
+                    else:
+                        new_img_tag = new_img_tag.replace(">", f' height="{img_detail.height}">')
+
+                logger.info(f"Replaced image placeholder for: {alt_text}")
+                return new_img_tag
+            else:
+                logger.warning(f"No matching image found for alt text: {alt_text}")
+                return img_tag
+
+        # Find all img tags with alt attribute
+        img_pattern = r'<img[^>]+alt="([^"]+)"[^>]*>'
+        updated_content = re.sub(img_pattern, replace_img_src, content)
+
+        replaced_count = sum(
+            1 for alt in alt_to_image if re.search(f'alt="{re.escape(alt)}"', content)
+        )
+        logger.info(f"Replaced {replaced_count} image placeholders in content")
+
+        return updated_content
 
     async def _generate_single_image(self, image_detail: ImageDetail) -> ImageDetail:
         """Generate a single image.
@@ -92,13 +165,13 @@ class ImageGenerator:
             image_url = await self.service.generate_image(
                 prompt=image_detail.description,
                 width=1024,
-                height=768,
+                height=1024,
             )
 
             # Update image detail
             image_detail.url = HttpUrl(image_url)
             image_detail.width = 1024
-            image_detail.height = 768
+            image_detail.height = 1024
             image_detail.generated = True
 
             logger.info(f"Image generated: {image_url}")

@@ -26,6 +26,7 @@ class APIConfig(BaseModel):
     image_api_base_url: str = Field(
         default_factory=lambda: os.environ.get("IMAGE_API_BASE_URL", "")
     )
+    gemini_api_key: str = Field(default_factory=lambda: os.environ.get("GEMINI_API_KEY", ""))
     http_timeout: int = Field(default_factory=lambda: int(os.environ.get("HTTP_TIMEOUT", "30")))
 
 
@@ -67,6 +68,11 @@ class Config(BaseModel):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     default_model: str = Field(
         default_factory=lambda: os.environ.get("DEFAULT_MODEL", "anthropic/claude-3.7-sonnet")
+    )
+    image_api_model_id: str = Field(
+        default_factory=lambda: os.environ.get(
+            "IMAGE_API_MODEL_ID", "gemini-2.0-flash-exp-image-generation"
+        )
     )
     default_model_params: Dict[str, Any] = Field(default_factory=dict)
 

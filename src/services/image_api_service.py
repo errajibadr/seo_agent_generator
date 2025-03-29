@@ -1,6 +1,9 @@
 """Image API service for generating images."""
 
+import base64
 import time
+import uuid
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import httpx
@@ -24,10 +27,16 @@ class ImageAPIService:
         """
         config = get_config()
         self.api_key = api_key or config.api.image_api_key
-        self.base_url = base_url or config.api.image_api_base_url
+        self.gemini_api_key = config.api.gemini_api_key
+        # Update the base URL for the direct Gemini API
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta"
         self.timeout = config.api.http_timeout
+        self.output_dir = Path("output/images")
 
-        if not self.api_key:
+        # Create output directory if it doesn't exist
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        if not self.api_key and not self.gemini_api_key:
             raise ValueError("Image API key is required")
 
     @retry(
@@ -38,26 +47,31 @@ class ImageAPIService:
         self,
         endpoint: str,
         payload: Dict[str, Any],
+        headers: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Make an API request to the image service.
 
         Args:
             endpoint: API endpoint
             payload: Request payload
+            headers: Optional request headers
 
         Returns:
             API response
         """
-        url = f"{self.base_url}/{endpoint}"
+        # Construct the URL with API key as query parameter
+        url = f"{self.base_url}/{endpoint}?key={self.gemini_api_key or self.api_key}"
 
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
+        default_headers = {
             "Content-Type": "application/json",
         }
 
+        # Merge default headers with any provided headers
+        request_headers = {**default_headers, **(headers or {})}
+
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(url, json=payload, headers=headers)
+                response = await client.post(url, json=payload, headers=request_headers)
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as e:
@@ -77,7 +91,7 @@ class ImageAPIService:
         self,
         prompt: str,
         width: int = 1024,
-        height: int = 768,
+        height: int = 1024,
         style: Optional[str] = None,
     ) -> str:
         """Generate an image using the image generation API.
@@ -91,26 +105,72 @@ class ImageAPIService:
         Returns:
             URL of the generated image as a string
         """
-        payload = {
-            "prompt": prompt,
-            "width": width,
-            "height": height,
-        }
-
-        if style:
-            payload["style"] = style
-
         logger.info(f"Generating image with prompt: {prompt[:50]}...")
 
-        # In a real implementation, this would call an actual image generation API
-        # For this example, we'll use a placeholder
+        try:
+            # Prepare the request payload for the Gemini model
+            payload = {
+                "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "responseModalities": ["image", "text"],
+                    "responseMimeType": "text/plain",
+                },
+            }
 
-        # Placeholder implementation (in a real app, uncomment the API call)
-        # response = await self._make_api_request("images/generations", payload)
-        # image_url = response["data"][0]["url"]
+            # Add style if provided
+            if style:
+                payload["generationConfig"]["style"] = style
 
-        # Placeholder for testing
-        image_url = f"https://example.com/images/generated-{int(time.time())}.jpg"
+            # Make the API request to generate content
+            model_id = "gemini-2.0-flash-exp-image-generation"
+            endpoint = f"models/{model_id}:generateContent"
 
-        logger.info(f"Image generated: {image_url}")
-        return image_url
+            response = await self._make_api_request(endpoint, payload)
+
+            # Process the response to extract image data
+            if not response or "candidates" not in response or not response["candidates"]:
+                raise ValueError("No valid response from API")
+
+            candidate = response["candidates"][0]
+            if "content" not in candidate or "parts" not in candidate["content"]:
+                raise ValueError("Invalid response format")
+
+            # Find the image part in the response
+            image_data = None
+            for part in candidate["content"]["parts"]:
+                if "inlineData" in part and part["inlineData"]["mimeType"].startswith("image/"):
+                    image_data = base64.b64decode(part["inlineData"]["data"])
+                    break
+
+            if not image_data:
+                raise ValueError("No image data found in response")
+
+            # Generate a unique filename
+            filename = f"{uuid.uuid4()}.png"
+            filepath = self.output_dir / filename
+
+            # Save the image to disk
+            with open(filepath, "wb") as f:
+                f.write(image_data)
+
+            # Return the file URL
+            image_url = f"file://{filepath.absolute()}"
+
+            logger.info(f"Image generated and saved to: {filepath}")
+            return image_url
+
+        except Exception as e:
+            logger.error(f"Error generating image: {e}")
+            raise
+
+
+# Add a main function for testing
+async def main():
+    service = ImageAPIService()
+    await service.generate_image("A beautiful sunset over a calm ocean")
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(main())

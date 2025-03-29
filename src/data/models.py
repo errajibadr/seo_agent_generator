@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 
 class KeywordData(BaseModel):
@@ -47,6 +47,7 @@ class KeywordData(BaseModel):
 class ImageDetail(BaseModel):
     """Model for image details."""
 
+    placeholder: Optional[str] = None
     alt_text: str
     description: str
     url: Optional[str] = None

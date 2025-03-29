@@ -2,9 +2,7 @@
 
 import asyncio
 import re
-from typing import Dict, Optional
-
-from pydantic import HttpUrl
+from typing import Dict, List, Optional, Tuple
 
 from src.config import get_config
 from src.data.models import BlogArticle, ImageDetail
@@ -92,63 +90,152 @@ class ImageGenerator:
         """
         content = blog_article.content
 
-        # Create a mapping of alt text to image details for quick lookup
+        # Create mappings for image lookup by alt text and placeholder
+        alt_to_image, placeholder_to_image = self._create_image_mappings(blog_article.image_details)
+
+        # First try replacing direct placeholder patterns like {{placeholder_name}}
+        content = self._replace_placeholder_patterns(content, placeholder_to_image)
+
+        # Then fall back to replacing img tags based on alt text
+        content = self._replace_img_tags(content, alt_to_image)
+
+        return content
+
+    def _create_image_mappings(
+        self, image_details: List[ImageDetail]
+    ) -> Tuple[Dict[str, ImageDetail], Dict[str, ImageDetail]]:
+        """Create mappings from alt text and placeholders to image details.
+
+        Args:
+            image_details: List of image detail objects
+
+        Returns:
+            Tuple of (alt_to_image, placeholder_to_image) dictionaries
+        """
+        # Map from alt text to image details
         alt_to_image: Dict[str, ImageDetail] = {
-            img.alt_text: img for img in blog_article.image_details if img.url
+            img.alt_text: img for img in image_details if img.url
         }
 
+        # Map from placeholder to image details
+        placeholder_to_image: Dict[str, ImageDetail] = {
+            img.placeholder: img for img in image_details if img.placeholder and img.url
+        }
+
+        return alt_to_image, placeholder_to_image
+
+    def _replace_placeholder_patterns(
+        self, content: str, placeholder_to_image: Dict[str, ImageDetail]
+    ) -> str:
+        """Replace {{placeholder}} patterns in content with image URLs.
+
+        Args:
+            content: HTML content
+            placeholder_to_image: Mapping from placeholder to image details
+
+        Returns:
+            Updated content with placeholders replaced by URLs
+        """
+        if not placeholder_to_image:
+            return content
+
+        updated_content = content
+        for placeholder, img_detail in placeholder_to_image.items():
+            if img_detail.url:  # Ensure URL is not None
+                placeholder_pattern = r"{{" + re.escape(placeholder) + r"}}"
+                updated_content = re.sub(placeholder_pattern, img_detail.url, updated_content)
+                logger.info(f"Replaced placeholder: {placeholder} with URL: {img_detail.url}")
+
+        return updated_content
+
+    def _replace_img_tags(self, content: str, alt_to_image: Dict[str, ImageDetail]) -> str:
+        """Replace src attributes in img tags based on matching alt text.
+
+        Args:
+            content: HTML content
+            alt_to_image: Mapping from alt text to image details
+
+        Returns:
+            Updated content with img src attributes replaced
+        """
         if not alt_to_image:
             logger.warning("No valid image URLs to replace in content")
             return content
 
-        # Find all img tags and replace src attributes with actual URLs
-        def replace_img_src(match):
-            alt_text = match.group(1)
-            img_tag = match.group(0)
-
-            if alt_text in alt_to_image:
-                # Image URL found, replace or add src attribute
-                img_detail = alt_to_image[alt_text]
-
-                # Check if there's an existing src attribute to replace
-                if 'src="' in img_tag:
-                    new_img_tag = re.sub(r'src="[^"]*"', f'src="{img_detail.url}"', img_tag)
-                else:
-                    # Add src attribute before closing bracket
-                    new_img_tag = img_tag.replace(">", f' src="{img_detail.url}">')
-
-                # Add width and height if available
-                if img_detail.width and img_detail.height:
-                    if 'width="' in new_img_tag:
-                        new_img_tag = re.sub(
-                            r'width="[^"]*"', f'width="{img_detail.width}"', new_img_tag
-                        )
-                    else:
-                        new_img_tag = new_img_tag.replace(">", f' width="{img_detail.width}">')
-
-                    if 'height="' in new_img_tag:
-                        new_img_tag = re.sub(
-                            r'height="[^"]*"', f'height="{img_detail.height}"', new_img_tag
-                        )
-                    else:
-                        new_img_tag = new_img_tag.replace(">", f' height="{img_detail.height}">')
-
-                logger.info(f"Replaced image placeholder for: {alt_text}")
-                return new_img_tag
-            else:
-                logger.warning(f"No matching image found for alt text: {alt_text}")
-                return img_tag
-
-        # Find all img tags with alt attribute
+        # Find all img tags with alt attribute and replace src attributes
         img_pattern = r'<img[^>]+alt="([^"]+)"[^>]*>'
-        updated_content = re.sub(img_pattern, replace_img_src, content)
+        updated_content = re.sub(
+            img_pattern, lambda match: self._process_img_tag(match, alt_to_image), content
+        )
 
+        # Count replaced images for logging
         replaced_count = sum(
             1 for alt in alt_to_image if re.search(f'alt="{re.escape(alt)}"', content)
         )
         logger.info(f"Replaced {replaced_count} image placeholders in content")
 
         return updated_content
+
+    def _process_img_tag(self, match: re.Match, alt_to_image: Dict[str, ImageDetail]) -> str:
+        """Process a single img tag match and update its attributes.
+
+        Args:
+            match: Regex match object for the img tag
+            alt_to_image: Mapping from alt text to image details
+
+        Returns:
+            Updated img tag string
+        """
+        alt_text = match.group(1)
+        img_tag = match.group(0)
+
+        if alt_text not in alt_to_image:
+            logger.warning(f"No matching image found for alt text: {alt_text}")
+            return img_tag
+
+        # Image URL found, replace or add src attribute
+        img_detail = alt_to_image[alt_text]
+
+        # Update src attribute
+        if 'src="' in img_tag:
+            new_img_tag = re.sub(r'src="[^"]*"', f'src="{img_detail.url}"', img_tag)
+        else:
+            new_img_tag = img_tag.replace(">", f' src="{img_detail.url}">')
+
+        # Add width and height attributes if available
+        # new_img_tag = self._update_img_dimensions(new_img_tag, img_detail)
+
+        logger.info(f"Replaced image placeholder for: {alt_text}")
+        return new_img_tag
+
+    def _update_img_dimensions(self, img_tag: str, img_detail: ImageDetail) -> str:
+        """Update width and height attributes of an img tag.
+
+        Args:
+            img_tag: HTML img tag string
+            img_detail: Image detail with width and height
+
+        Returns:
+            Updated img tag string with width and height attributes
+        """
+        if not (img_detail.width and img_detail.height):
+            return img_tag
+
+        new_img_tag = img_tag
+
+        # Add width attribute
+        if 'width="' in new_img_tag:
+            new_img_tag = re.sub(r'width="[^"]*"', f'width="{img_detail.width}"', new_img_tag)
+        else:
+            new_img_tag = new_img_tag.replace(">", f' width="{img_detail.width}">')
+
+        # Add height attribute
+        if 'height="' in new_img_tag:
+            new_img_tag = re.sub(r'height="[^"]*"', f'height="{img_detail.height}"', new_img_tag)
+        else:
+            new_img_tag = new_img_tag.replace(">", f' height="{img_detail.height}">')
+
+        return new_img_tag
 
     async def _generate_single_image(self, image_detail: ImageDetail) -> ImageDetail:
         """Generate a single image.

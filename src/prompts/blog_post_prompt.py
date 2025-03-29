@@ -47,7 +47,7 @@ STRUCTURE DE CONTENU :
      * Éléments visuels suggérés
    - Inclure :
      * Au moins 2 listes à puces
-     * 1-2 citations expertes (blockquote) [seulement si les citations sont pertinentes]
+     * 1 citation experte (blockquote) [seulement si les citations sont pertinentes]
      * Données statistiques récentes [seulement si les données sont pertinentes]
      * Exemples locaux/géographiques [seulement si les exemples sont pertinents]
 
@@ -84,16 +84,15 @@ OPTIMISATION SEO/GEO 2025 :
    - Temps de lecture estimé
    
 5. Mots-clés à intégrer
-   - Tu recevrais une liste de mots-clés à intégrer dans le contenu.
-   - Tu dois intégrer ces mots-clés de manière naturelle et non intrusive.
-   - Tu dois éviter d'utiliser les mêmes mots-clés dans plusieurs sections.
-   - Tu dois éviter d'utiliser les mêmes mots-clés dans des positions similaires.
-   - Tu dois éviter d'utiliser les mêmes mots-clés dans des contextes similaires.
-   - Mets de l'importance sur les mots-clés les plus importants. (importance_in_cluster)
+   - intégrer les mots-clés de manière naturelle et non intrusive.
+   - éviter d'utiliser les mêmes mots-clés dans plusieurs sections.
+   - éviter d'utiliser les mêmes mots-clés dans des positions similaires.
+   - éviter d'utiliser les mêmes mots-clés dans des contextes similaires.
+   - plus de fréquence des mots-clés les plus importants. (importance_in_cluster)
 
 FORMAT JSON REQUIS :
 {
-  "Titre": "string - Titre optimisé pour CTR",
+  "Titre": "string - Titre optimisé pour CTR avec l'année en cours",
   "Slug": "string - URL optimisée SEO",
   "Date de publication": "string - Format DD/MM/YYYY",
   "Durée de lecture": "string - X minutes",
@@ -128,6 +127,8 @@ CRITÈRES DE QUALITÉ :
 
 Ne remplir que les champs pour lesquels vous avez des informations pertinentes et fiables.
 Utiliser \n\n pour les sauts de section et \\" pour les guillemets dans le contenu HTML.
+
+IMPORTANT: RESPECTER STRICTEMENT LA LIMITE DE 1500 MOTS. PRIORISER CONCISION ET CLARTÉ.
 
 MOTS-CLÉS CIBLES : 
 

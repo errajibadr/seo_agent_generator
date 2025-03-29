@@ -154,7 +154,7 @@ class ImageAPIService:
                 f.write(image_data)
 
             # Return the file URL
-            image_url = f"images/{filename}"
+            image_url = f"output/images/{filename}"
 
             logger.info(f"Image generated and saved to: {filepath}")
             return image_url
@@ -167,7 +167,7 @@ class ImageAPIService:
 # Add a main function for testing
 async def main():
     service = ImageAPIService()
-    await service.generate_image("A beautiful sunset over a calm ocean")
+    await service.generate_image("Generate an image for: Éducateur canin travaillant...")
 
 
 if __name__ == "__main__":

@@ -67,7 +67,7 @@ class ContentWriter:
             prompt=formatted_prompt,
             system_prompt=system_prompt,
             temperature=0.7,
-            max_tokens=5000,
+            max_tokens=6000,
         )
 
         # Extract JSON content
@@ -114,13 +114,21 @@ class ContentWriter:
         img_tags = re.finditer(img_pattern, content)
 
         for i, match in enumerate(img_tags):
+            img_tag = match.group(0)
             alt_text = match.group(1)
+
+            # Check if there's a placeholder in the src attribute
+            placeholder = None
+            placeholder_match = re.search(r'src="{{([^}]+)}}"', img_tag)
+            if placeholder_match:
+                placeholder = placeholder_match.group(1)
 
             # Create an image detail
             image_details.append(
                 ImageDetail(
                     alt_text=alt_text,
                     description=f"Generate an image for: {alt_text}",
+                    placeholder=placeholder,
                 )
             )
 

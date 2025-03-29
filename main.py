@@ -3,14 +3,13 @@
 import argparse
 import asyncio
 import json
-import os
 import sys
+import time
 from pathlib import Path
 from typing import List, Optional
 
 from src.agents.content_writer import ContentWriter
 from src.agents.image_generator import ImageGenerator
-from src.config import get_config
 from src.data.csv_processor import CSVProcessor
 from src.data.models import BlogArticle, KeywordData
 from src.utils.logger import get_logger
@@ -37,6 +36,7 @@ async def process_cluster(
     Returns:
         Generated blog article or None if failed
     """
+    blog_article = None
     try:
         # Generate blog content
         logger.info(f"Generating content for cluster: {cluster_name}")
@@ -57,6 +57,24 @@ async def process_cluster(
 
     except Exception as e:
         logger.error(f"Error processing cluster {cluster_name}: {e}")
+
+        # If we have a blog article but there was an error in later steps,
+        # save it to the backup location to prevent content loss
+        if blog_article:
+            try:
+                backup_dir = Path("log/content")
+                backup_dir.mkdir(parents=True, exist_ok=True)
+                timestamp = int(time.time())
+                error_file = (
+                    backup_dir / f"{blog_article.slug.replace(' ', '_')}_{timestamp}_error.json"
+                )
+
+                with open(error_file, "w", encoding="utf-8") as f:
+                    json.dump(blog_article.to_json_dict(), f, ensure_ascii=False, indent=2)
+                logger.info(f"Saved failed blog content to {error_file}")
+            except Exception as backup_error:
+                logger.error(f"Failed to save backup of blog content: {backup_error}")
+
         return None
 
 
@@ -75,8 +93,6 @@ async def process_batch(
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Create agents
-    config = get_config()
     content_writer = ContentWriter()
     image_generator = ImageGenerator()
 
@@ -199,11 +215,14 @@ async def async_main():
                 logger.error("No valid keyword data found in CSV")
                 sys.exit(1)
 
-            first_cluster_name = next(iter(keyword_data_dict))
-            first_cluster_data = keyword_data_dict[first_cluster_name]
+            import random
+
+            # Select a random cluster instead of always taking the first one
+            cluster_name = random.choice(list(keyword_data_dict.keys()))
+            cluster_data = keyword_data_dict[cluster_name]
             # Process keywords
             await process_batch(
-                {first_cluster_name: first_cluster_data},
+                {cluster_name: cluster_data},
                 output_path,
                 max_concurrent=args.max_concurrent,
             )

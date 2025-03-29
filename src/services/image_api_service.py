@@ -154,7 +154,7 @@ class ImageAPIService:
                 f.write(image_data)
 
             # Return the file URL
-            image_url = f"file://{filepath.absolute()}"
+            image_url = f"images/{filename}"
 
             logger.info(f"Image generated and saved to: {filepath}")
             return image_url

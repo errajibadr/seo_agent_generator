@@ -169,7 +169,7 @@ class ImageGenerator:
             )
 
             # Update image detail
-            image_detail.url = HttpUrl(image_url)
+            image_detail.url = image_url
             image_detail.width = 1024
             image_detail.height = 1024
             image_detail.generated = True

@@ -49,7 +49,7 @@ class ImageDetail(BaseModel):
 
     alt_text: str
     description: str
-    url: Optional[HttpUrl] = None
+    url: Optional[str] = None
     width: Optional[int] = None
     height: Optional[int] = None
     generated: bool = False

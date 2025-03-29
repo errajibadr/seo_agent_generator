@@ -1,0 +1,7 @@
+---
+description: Best practices for using QWEN chat_completion from MCP Server
+globs: 
+alwaysApply: false
+---
+- Use QWEN chat_completion from MCP Server to generate better ideas and code
+- Integrate QWEN chat_completion into your workflow for improved results

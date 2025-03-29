@@ -1,0 +1,9 @@
+---
+description: Best practices for using MCP Servers
+globs: 
+alwaysApply: false
+---
+- Always use MCP Servers for all tools and servers without exception
+- Configure MCP-related packages correctly for existing commands
+- Add MCP Server configuration to commands that don't use it
+- If no standard MCP Server configuration exists, add the appropriate parameter

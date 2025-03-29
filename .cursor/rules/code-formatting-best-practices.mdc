@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Follow PIP8 Style guides preferences for code formatting
+- When adjustments are requested, minimize repetition and show only relevant parts
+- Split responses into multiple messages if necessary
+- Adhere strictly to MCP Server usage rules without exceptions

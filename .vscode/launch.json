@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug SEO Agent with UV",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "args": ["--input", "data/éducateur-canin_clusters_2025-03-28.csv", "--output", "output"],
+      "console": "integratedTerminal"
+      // "justMyCode": false
+      // "env": {
+      //   "PYTHONPATH": "${workspaceFolder}"
+      // }
+    }
+  ]
+}

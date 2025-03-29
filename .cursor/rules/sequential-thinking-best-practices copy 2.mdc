@@ -1,0 +1,7 @@
+---
+description: Best practices for using MCP Servers
+globs: 
+alwaysApply: false
+---
+- Always use Sequential thinking to better explode a task into multiple sub tasks
+- Try to find the best solution

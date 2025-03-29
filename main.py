@@ -3,13 +3,15 @@
 import argparse
 import asyncio
 import json
+import random
 import sys
 import time
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from src.agents.content_writer import ContentWriter
 from src.agents.image_generator import ImageGenerator
+from src.config import validate_config
 from src.data.csv_processor import CSVProcessor
 from src.data.models import BlogArticle, KeywordData
 from src.utils.logger import get_logger
@@ -125,6 +127,26 @@ async def process_batch(
     logger.info(f"Batch processing complete: {successes} successful, {failures} failed")
 
 
+def merge_keyword_data_dicts(
+    dicts_list: List[Dict[str, List[KeywordData]]],
+) -> Dict[str, List[KeywordData]]:
+    """Merge multiple keyword data dictionaries into one.
+
+    Args:
+        dicts_list: List of keyword data dictionaries to merge
+
+    Returns:
+        Merged dictionary
+    """
+    merged_dict = {}
+    for data_dict in dicts_list:
+        for cluster_name, cluster_data in data_dict.items():
+            if cluster_name not in merged_dict:
+                merged_dict[cluster_name] = []
+            merged_dict[cluster_name].extend(cluster_data)
+    return merged_dict
+
+
 def parse_args():
     """Parse command line arguments.
 
@@ -132,18 +154,19 @@ def parse_args():
         Parsed arguments
     """
     parser = argparse.ArgumentParser(description="Generate SEO blog articles from keyword data")
-    parser.add_argument("--input", required=True, help="Input CSV file or directory for batch mode")
+    parser.add_argument("--input", required=True, help="Input CSV file or directory of CSV files")
     parser.add_argument("--output", required=True, help="Output directory for generated articles")
     parser.add_argument(
         "--batch",
-        action="store_true",
-        help="Enable batch mode (process a directory of CSV files)",
+        type=int,
+        default=10,
+        help="Number of clusters to process randomly (999 to process all clusters)",
     )
     parser.add_argument(
         "--max-concurrent",
         type=int,
         default=3,
-        help="Maximum number of concurrent tasks in batch mode",
+        help="Maximum number of concurrent tasks",
     )
 
     return parser.parse_args()
@@ -156,11 +179,10 @@ async def async_main():
     input_path = Path(args.input)
     output_path = Path(args.output)
 
-    # Validate config
-    # config_error = validate_config()
-    # if config_error:
-    #     logger.error(f"Configuration error: {config_error}")
-    #     sys.exit(1)
+    config_error = validate_config()
+    if config_error:
+        logger.error(f"Configuration error: {config_error}")
+        sys.exit(1)
 
     # Check if input path exists
     if not input_path.exists():
@@ -170,66 +192,71 @@ async def async_main():
     # Create output directory
     output_path.mkdir(parents=True, exist_ok=True)
 
-    if args.batch:
-        # Batch mode
-        if not input_path.is_dir():
-            logger.error("Batch mode requires input to be a directory")
-            sys.exit(1)
-
-        # Get all CSV files in directory
+    # Collect CSV files to process
+    csv_to_process = []
+    if input_path.is_dir():
+        # Find all CSV files in directory
         csv_files = list(input_path.glob("*.csv"))
         if not csv_files:
             logger.error(f"No CSV files found in {input_path}")
             sys.exit(1)
-
-        # Process each CSV file
+        csv_to_process.extend(csv_files)
         logger.info(f"Found {len(csv_files)} CSV files to process")
-
-        for csv_file in csv_files:
-            logger.info(f"Processing file: {csv_file}")
-
-            try:
-                # Read CSV
-                csv_processor = CSVProcessor(csv_file)
-                keyword_data_list = csv_processor.read_csv()
-
-                if not keyword_data_list:
-                    logger.warning(f"No valid keyword data found in {csv_file}")
-                    continue
-
-                # Generate articles for this CSV
-                file_output_dir = output_path / csv_file.stem
-                await process_batch(
-                    keyword_data_list, file_output_dir, max_concurrent=args.max_concurrent
-                )
-
-            except Exception as e:
-                logger.error(f"Error processing file {csv_file}: {e}")
     else:
+        # Single file
+        csv_to_process.append(input_path)
+        logger.info(f"Processing single file: {input_path}")
+
+    # Read and process all CSV files
+    keyword_data_dicts = []
+    for csv_file in csv_to_process:
+        logger.info(f"Reading file: {csv_file}")
         try:
-            # Read CSV
-            csv_processor = CSVProcessor(input_path)
-            keyword_data_dict = csv_processor.read_csv()
+            csv_processor = CSVProcessor(csv_file)
+            file_keyword_data = csv_processor.read_csv()
 
-            if not keyword_data_dict:
-                logger.error("No valid keyword data found in CSV")
-                sys.exit(1)
+            if not file_keyword_data:
+                logger.warning(f"No valid keyword data found in {csv_file}")
+                continue
 
-            import random
-
-            # Select a random cluster instead of always taking the first one
-            cluster_name = random.choice(list(keyword_data_dict.keys()))
-            cluster_data = keyword_data_dict[cluster_name]
-            # Process keywords
-            await process_batch(
-                {cluster_name: cluster_data},
-                output_path,
-                max_concurrent=args.max_concurrent,
-            )
+            keyword_data_dicts.append(file_keyword_data)
 
         except Exception as e:
-            logger.error(f"Error processing file: {e}")
-            sys.exit(1)
+            logger.error(f"Error processing file {csv_file}: {e}")
+
+    # Merge all data dictionaries
+    keyword_data_dict = merge_keyword_data_dicts(keyword_data_dicts)
+
+    if not keyword_data_dict:
+        logger.error("No valid keyword data found in any CSV files")
+        sys.exit(1)
+
+    # Get all cluster names
+    all_clusters = list(keyword_data_dict.keys())
+    total_clusters = len(all_clusters)
+    logger.info(f"Found {total_clusters} clusters across all processed files")
+
+    # Determine how many clusters to process
+    if args.batch >= 999 or args.batch >= total_clusters:
+        # Process all clusters
+        clusters_to_process = all_clusters
+        logger.info(f"Processing all {total_clusters} clusters")
+    else:
+        # Process random clusters without replacement
+        clusters_to_process = random.sample(all_clusters, args.batch)
+        logger.info(f"Processing {len(clusters_to_process)} randomly selected clusters")
+
+    # Create a new dictionary with only the selected clusters
+    selected_data_dict = {
+        cluster_name: keyword_data_dict[cluster_name] for cluster_name in clusters_to_process
+    }
+
+    # Process selected clusters
+    await process_batch(
+        selected_data_dict,
+        output_path,
+        max_concurrent=args.max_concurrent,
+    )
 
 
 def main():

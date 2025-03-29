@@ -1,12 +1,14 @@
 """Image API service for generating images."""
 
 import base64
+import io
 import time
 import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import httpx
+from PIL import Image
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.config import get_config
@@ -90,6 +92,7 @@ class ImageAPIService:
     async def generate_image(
         self,
         prompt: str,
+        placeholder: str | None = None,
         width: int = 1024,
         height: int = 1024,
         style: Optional[str] = None,
@@ -145,13 +148,17 @@ class ImageAPIService:
             if not image_data:
                 raise ValueError("No image data found in response")
 
-            # Generate a unique filename
-            filename = f"{uuid.uuid4()}.png"
+            # Generate a unique filename with WebP format for better compression
+            filename = f"{placeholder}_{str(uuid.uuid4())[:8]}.webp".lstrip("_")
             filepath = self.output_dir / filename
 
-            # Save the image to disk
-            with open(filepath, "wb") as f:
-                f.write(image_data)
+            # Convert image data to WebP format for better compression
+
+            # Create an image from the binary data
+            img = Image.open(io.BytesIO(image_data))
+
+            # Save as WebP with high quality but good compression
+            img.save(filepath, format="WEBP", quality=85, method=6)
 
             # Return the file URL
             image_url = f"output/images/{filename}"
@@ -167,7 +174,10 @@ class ImageAPIService:
 # Add a main function for testing
 async def main():
     service = ImageAPIService()
-    await service.generate_image("Generate an image for: Éducateur canin travaillant...")
+    await service.generate_image(
+        placeholder="Éducateur canin travaillant",
+        prompt="Generate an image for: Éducateur canin travaillant...",
+    )
 
 
 if __name__ == "__main__":

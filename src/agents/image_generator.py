@@ -250,6 +250,7 @@ class ImageGenerator:
             # Generate image
             logger.info(f"Generating image: {image_detail.alt_text}")
             image_url = await self.service.generate_image(
+                placeholder=image_detail.placeholder,
                 prompt=image_detail.description,
                 width=1024,
                 height=1024,

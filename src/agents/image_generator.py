@@ -2,6 +2,7 @@
 
 import asyncio
 import re
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from src.config import get_config
@@ -15,13 +16,17 @@ logger = get_logger(__name__)
 class ImageGenerator:
     """Agent for generating images for blog articles."""
 
-    def __init__(self, image_service: Optional[ImageAPIService] = None):
+    def __init__(
+        self, image_service: Optional[ImageAPIService] = None, output_dir: Optional[Path] = None
+    ):
         """Initialize the image generator agent.
 
         Args:
             image_service: Optional service for image generation API
+            output_dir: Directory to save generated images
         """
-        self.service = image_service or ImageAPIService()
+        self.output_dir = output_dir or Path("output/images")
+        self.service = image_service or ImageAPIService(output_dir=self.output_dir)
         self.config = get_config()
 
     async def generate_images(self, blog_article: BlogArticle) -> BlogArticle:

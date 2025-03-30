@@ -20,12 +20,18 @@ logger = get_logger(__name__)
 class ImageAPIService:
     """Service for interacting with image generation APIs."""
 
-    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        output_dir: Optional[Path] = None,
+    ):
         """Initialize the image API service.
 
         Args:
             api_key: API key for image generation service (defaults to config value)
             base_url: Base URL for image API (defaults to config value)
+            output_dir: Directory to save generated images (defaults to output/images)
         """
         config = get_config()
         self.api_key = api_key or config.api.image_api_key
@@ -33,7 +39,7 @@ class ImageAPIService:
         # Update the base URL for the direct Gemini API
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
         self.timeout = config.api.http_timeout
-        self.output_dir = Path("output/images")
+        self.output_dir = output_dir if output_dir else Path("output/images")
 
         # Create output directory if it doesn't exist
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -161,7 +167,7 @@ class ImageAPIService:
             img.save(filepath, format="WEBP", quality=85, method=6)
 
             # Return the file URL
-            image_url = f"output/images/{filename}"
+            image_url = f"{str(self.output_dir)}/{filename}"
 
             logger.info(f"Image generated and saved to: {filepath}")
             return image_url

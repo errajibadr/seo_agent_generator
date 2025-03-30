@@ -96,8 +96,12 @@ async def process_batch(
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Create images directory inside output directory
+    images_dir = output_dir / "images"
+    images_dir.mkdir(parents=True, exist_ok=True)
+
     content_writer = ContentWriter(near_me=local_seo)
-    image_generator = ImageGenerator()
+    image_generator = ImageGenerator(output_dir=images_dir)
 
     # Process in batches to avoid overwhelming APIs
     total = len(keyword_data_dict)

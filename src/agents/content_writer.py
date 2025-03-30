@@ -1,6 +1,8 @@
 """Content writer agent for generating blog articles."""
 
+import datetime
 import json
+import random
 import re
 from typing import List, Optional
 
@@ -16,7 +18,9 @@ logger = get_logger(__name__)
 class ContentWriter:
     """Agent for generating blog content."""
 
-    def __init__(self, openrouter_service: Optional[OpenRouterService] = None):
+    def __init__(
+        self, openrouter_service: Optional[OpenRouterService] = None, near_me: Optional[str] = None
+    ):
         """Initialize the content writer agent.
 
         Args:
@@ -24,6 +28,8 @@ class ContentWriter:
         """
         self.service = openrouter_service or OpenRouterService()
         self.config = get_config()
+        self.near_me = near_me
+        self.max_tokens = 6000
 
     def cluster_to_prompt_context(self, cluster_name: str, cluster_data: List[KeywordData]) -> dict:
         """Convert cluster data to prompt context.
@@ -54,12 +60,20 @@ class ContentWriter:
         formatted_prompt = blog_post_prompt.replace(
             "{keywords}", json.dumps(prompt_context, ensure_ascii=False)
         )
+        if self.near_me:
+            formatted_prompt = formatted_prompt.replace("{NearMe}", self.near_me)
+        else:
+            formatted_prompt = formatted_prompt.replace("{NearMe}", "Not specified")
 
         # Generate content
         system_prompt = (
             "You are a professional SEO content writer. Create high-quality, "
             "SEO-optimized blog content based on the provided instructions and keywords. "
-            "The output must be in valid JSON format following the structure specified in the prompt."
+            "The output must be in valid JSON format following the structure specified in the prompt. "
+            "current date is {current_date}"
+            "You have a max token of {max_tokens}"
+        ).format(
+            current_date=datetime.datetime.now().strftime("%Y-%m-%d"), max_tokens=self.max_tokens
         )
 
         logger.info(f"Generating blog for cluster: {cluster_name}")
@@ -67,7 +81,7 @@ class ContentWriter:
             prompt=formatted_prompt,
             system_prompt=system_prompt,
             temperature=0.7,
-            max_tokens=6000,
+            max_tokens=self.max_tokens,
         )
 
         # Extract JSON content
@@ -85,7 +99,9 @@ class ContentWriter:
         return BlogArticle(
             title=blog_json.get("Titre", ""),
             slug=blog_json.get("Slug", ""),
-            publication_date=blog_json.get("Date de publication", ""),
+            publication_date=(
+                datetime.datetime.now() - datetime.timedelta(days=random.randint(1, 90))
+            ).strftime("%d/%m/%Y"),
             reading_time=blog_json.get("Durée de lecture", ""),
             table_of_contents=blog_json.get("Table des matières", ""),
             content=blog_json.get("Contenu article", ""),
@@ -119,7 +135,10 @@ class ContentWriter:
 
             # Check if there's a placeholder in the src attribute
             placeholder = None
-            placeholder_match = re.search(r'src="{{([^}]+)}}"', img_tag)
+            placeholder_match = re.search(
+                r'src="(?:{{)?([^{}]+?)(?:}})?(?:\.(jpg|png|webp))?(?:\?[^"]*)?(?:")', img_tag
+            )
+
             if placeholder_match:
                 placeholder = placeholder_match.group(1)
 

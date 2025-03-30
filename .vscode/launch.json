@@ -6,7 +6,7 @@
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/main.py",
-      "args": ["--input", "data/éducateur-canin_clusters_2025-03-28.csv", "--output", "output"],
+      "args": ["--input", "data/", "--output", "output", "--batch", "1", "--max-concurrent", "1"],
       "console": "integratedTerminal"
       // "justMyCode": false
       // "env": {

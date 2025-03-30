@@ -1,6 +1,4 @@
-blog_post_prompt = """Génère un article SEO/GEO/AEO optimisé au format JSON avec les spécifications suivantes :
-
-INSTRUCTIONS TECHNIQUES :
+blog_post_prompt_seo_v1 = """INSTRUCTIONS TECHNIQUES :
 1. Format JSON avec échappement correct des caractères spéciaux
 2. Structure HTML sémantique pour la colonne "Contenu article"
    - Utilisation appropriée des balises HTML5 (article, section, aside, figure, etc.)
@@ -22,7 +20,7 @@ INSTRUCTIONS TECHNIQUES :
 5. Métriques de contenu
    - Durée de lecture : 6-8 minutes
    - Densité de mots-clés : 1-2%
-   - Longueur optimale : 2500-3000 mots
+   - Longueur optimale : 1500-2000 mots
    - Readability score : 60-70 (Flesch)
 6. Optimisation pour extraction AI
    - Réponses directes et concises après chaque question-titre
@@ -145,11 +143,12 @@ CRITÈRES DE QUALITÉ :
    - Optimisation multiplateforme (mobile, desktop, voice)
 
 Ne remplir que les champs pour lesquels vous avez des informations pertinentes et fiables.
-Utiliser \n pour les sauts de section et \\" pour les guillemets dans le contenu HTML.
+Utiliser 
+ pour les sauts de section et \" pour les guillemets dans le contenu HTML.
 
-IMPORTANT: RESPECTER STRICTEMENT LA LIMITE DE 2500 MOTS. PRIORISER CONCISION ET CLARTÉ.
+IMPORTANT: RESPECTER STRICTEMENT LA LIMITE DE 1500 MOTS. PRIORISER CONCISION ET CLARTÉ.
 
-UTILISEZ LES MOTS-CLÉS FOURNIS: Intégrer naturellement les mots-clés fournis dans le format JSON, en respectant leur importance relative ( importance_in_cluster ) et l'intention de recherche associée ( intent ).
+UTILISEZ LES MOTS-CLÉS FOURNIS: Intégrer naturellement les mots-clés fournis dans le format JSON, en respectant leur importance relative et l'intention de recherche associée.
 
 Local : 
 Near me : {NearMe}
@@ -159,5 +158,5 @@ Near me : {NearMe}
 - Sinon garder la zone indéfinie sans en mentionner une en particulier
 
 MOTS-CLÉS CIBLES : 
-{keywords}
+{"cluster_name": "métier avec les animaux sans diplome", "keywords": [{"primary_keyword": "métier avec les animaux sans diplome", "importance_in_cluster": 0.17218543046357615, "intent": "Informational", "volume": 260, "competition": 0.0, "content_references": ["https://www.cnfdi.com/le-blog/4-metiers-pour-travailler-avec-les-animaux-sans-diplome-340.html", "https://www.cours-animalia.com/actualites/travailler-avec-les-animaux-sans-diplome-121.html"]}, {"primary_keyword": "métier avec les animaux sans diplôme", "importance_in_cluster": 0.2119205298013245, "intent": "Informational", "volume": 320, "competition": 0.0, "content_references": ["https://www.cnfdi.com/le-blog/4-metiers-pour-travailler-avec-les-animaux-sans-diplome-340.html", "https://www.cours-animalia.com/actualites/travailler-avec-les-animaux-sans-diplome-121.html"]}, {"primary_keyword": "metier avec animaux sans diplome", "importance_in_cluster": 0.17218543046357615, "intent": "Informational", "volume": 260, "competition": 0.0, "content_references": ["https://www.cnfdi.com/le-blog/4-metiers-pour-travailler-avec-les-animaux-sans-diplome-340.html", "https://www.cours-animalia.com/actualites/travailler-avec-les-animaux-sans-diplome-121.html"]}, {"primary_keyword": "travailler avec des animaux sans diplome", "importance_in_cluster": 0.11258278145695365, "intent": "Informational", "volume": 170, "competition": 0.0, "content_references": ["https://www.cnfdi.com/le-blog/4-metiers-pour-travailler-avec-les-animaux-sans-diplome-340.html", "https://www.cours-animalia.com/actualites/travailler-avec-les-animaux-sans-diplome-121.html"]}, {"primary_keyword": "emploi avec animaux sans diplome", "importance_in_cluster": 0.11258278145695365, "intent": "Informational", "volume": 170, "competition": 0.0, "content_references": ["https://www.cnfdi.com/le-blog/4-metiers-pour-travailler-avec-les-animaux-sans-diplome-340.html", "https://www.cours-animalia.com/actualites/travailler-avec-les-animaux-sans-diplome-121.html"]}, {"primary_keyword": "emploi avec les animaux sans diplôme", "importance_in_cluster": 0.11258278145695365, "intent": "Informational", "volume": 170, "competition": 0.0, "content_references": ["https://www.cnfdi.com/le-blog/4-metiers-pour-travailler-avec-les-animaux-sans-diplome-340.html", "https://www.cours-animalia.com/actualites/travailler-avec-les-animaux-sans-diplome-121.html"]}, {"primary_keyword": "travailler avec les animaux sans diplôme", "importance_in_cluster": 0.0728476821192053, "intent": "Informational", "volume": 110, "competition": 0.0, "content_references": ["https://www.cnfdi.com/le-blog/4-metiers-pour-travailler-avec-les-animaux-sans-diplome-340.html", "https://www.cours-animalia.com/actualites/travailler-avec-les-animaux-sans-diplome-121.html"]}, {"primary_keyword": "travailler avec les chiens sans diplôme", "importance_in_cluster": 0.033112582781456956, "intent": "Informational", "volume": 50, "competition": 0.0, "content_references": ["https://www.cnfdi.com/le-blog/4-metiers-pour-travailler-avec-les-animaux-sans-diplome-340.html", "https://www.cours-animalia.com/actualites/travailler-avec-les-animaux-sans-diplome-121.html"]}]}
 """

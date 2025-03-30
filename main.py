@@ -83,6 +83,7 @@ async def process_cluster(
 async def process_batch(
     keyword_data_dict: dict[str, List[KeywordData]],
     output_dir: Path,
+    local_seo: Optional[str] = None,
     max_concurrent: int = 1,
 ) -> None:
     """Process a batch of clusters.
@@ -95,7 +96,7 @@ async def process_batch(
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    content_writer = ContentWriter()
+    content_writer = ContentWriter(near_me=local_seo)
     image_generator = ImageGenerator()
 
     # Process in batches to avoid overwhelming APIs
@@ -161,6 +162,12 @@ def parse_args():
         type=int,
         default=10,
         help="Number of clusters to process randomly (999 to process all clusters)",
+    )
+    parser.add_argument(
+        "--local-seo",
+        type=str,
+        default=None,
+        help="Local SEO keyword to use for the blog",
     )
     parser.add_argument(
         "--max-concurrent",

@@ -7,7 +7,7 @@ INPUT_DIR = data
 OUTPUT_DIR = output
 DEFAULT_CSV = $(INPUT_DIR)/
 DEFAULT_MAX_CONCURRENT = 2
-DEFAULT_BATCH = 2
+DEFAULT_BATCH = 1
 
 # Define phony targets
 .PHONY: all setup clean venv install help run_main run_batch run_image

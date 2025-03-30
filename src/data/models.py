@@ -41,6 +41,9 @@ class KeywordData(BaseModel):
             "intent": self.intent or "informational",
             "volume": self.volume or 0,
             "competition": self.competitive_density or 0.0,
+            "content_references": list(self.content_references.values())[:2]
+            if self.content_references
+            else [],
         }
 
 

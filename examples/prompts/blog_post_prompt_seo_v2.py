@@ -1,5 +1,4 @@
-blog_post_prompt = """Génère un article SEO/GEO/AEO optimisé au format JSON avec les spécifications suivantes :
-
+blog_post_prompt_seo_v2 = """
 INSTRUCTIONS TECHNIQUES :
 1. Format JSON avec échappement correct des caractères spéciaux
 2. Structure HTML sémantique pour la colonne "Contenu article"
@@ -145,19 +144,20 @@ CRITÈRES DE QUALITÉ :
    - Optimisation multiplateforme (mobile, desktop, voice)
 
 Ne remplir que les champs pour lesquels vous avez des informations pertinentes et fiables.
-Utiliser \n pour les sauts de section et \\" pour les guillemets dans le contenu HTML.
+Utiliser 
+ pour les sauts de section et \" pour les guillemets dans le contenu HTML.
 
 IMPORTANT: RESPECTER STRICTEMENT LA LIMITE DE 2500 MOTS. PRIORISER CONCISION ET CLARTÉ.
 
 UTILISEZ LES MOTS-CLÉS FOURNIS: Intégrer naturellement les mots-clés fournis dans le format JSON, en respectant leur importance relative ( importance_in_cluster ) et l'intention de recherche associée ( intent ).
 
 Local : 
-Near me : {NearMe}
+Near me : Not specified
 - Si 'Near Me' est spécifié, adapter le contenu à cette zone géographique précise
 - Concentration sur les recherches "Near Me" / "Près de chez moi"
 - Intégrer des références géographiques précises (ville, région, points d'intérêt)
 - Sinon garder la zone indéfinie sans en mentionner une en particulier
 
 MOTS-CLÉS CIBLES : 
-{keywords}
+{"cluster_name": "dressage de chien à domicile", "keywords": [{"primary_keyword": "dressage de chien à domicile", "importance_in_cluster": 0.5, "intent": "Commercial", "volume": 70, "competition": 0.0, "content_references": ["https://www.canibest.com/educateur-canin-domicile/", "https://www.pagesjaunes.fr/activites/dresseur-canin.html"]}, {"primary_keyword": "dresseur de chien à domicile", "importance_in_cluster": 0.5, "intent": "Commercial", "volume": 70, "competition": 0.0, "content_references": ["https://www.canibest.com/educateur-canin-domicile/", "https://www.pagesjaunes.fr/activites/dresseur-canin.html"]}]}
 """

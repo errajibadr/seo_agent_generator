@@ -94,10 +94,17 @@ class ImageGenerator:
         alt_to_image, placeholder_to_image = self._create_image_mappings(blog_article.image_details)
 
         # First try replacing direct placeholder patterns like {{placeholder_name}}
-        content = self._replace_placeholder_patterns(content, placeholder_to_image)
+        content, replaced_alt_texts = self._replace_placeholder_patterns(
+            content, placeholder_to_image
+        )
 
-        # Then fall back to replacing img tags based on alt text
-        content = self._replace_img_tags(content, alt_to_image)
+        # Filter out already replaced images by alt text
+        filtered_alt_to_image = {
+            alt: img for alt, img in alt_to_image.items() if alt not in replaced_alt_texts
+        }
+
+        # Then fall back to replacing img tags based on alt text (only for images not already replaced)
+        content = self._replace_img_tags(content, filtered_alt_to_image)
 
         return content
 
@@ -126,7 +133,7 @@ class ImageGenerator:
 
     def _replace_placeholder_patterns(
         self, content: str, placeholder_to_image: Dict[str, ImageDetail]
-    ) -> str:
+    ) -> Tuple[str, set]:
         """Replace {{placeholder}} patterns in content with image URLs.
 
         Args:
@@ -134,19 +141,25 @@ class ImageGenerator:
             placeholder_to_image: Mapping from placeholder to image details
 
         Returns:
-            Updated content with placeholders replaced by URLs
+            Tuple of (updated content, set of alt texts that were replaced)
         """
         if not placeholder_to_image:
-            return content
+            return content, set()
 
         updated_content = content
+        replaced_alt_texts = set()
+
         for placeholder, img_detail in placeholder_to_image.items():
             if img_detail.url:  # Ensure URL is not None
                 placeholder_pattern = r"{{" + re.escape(placeholder) + r"}}"
-                updated_content = re.sub(placeholder_pattern, img_detail.url, updated_content)
-                logger.info(f"Replaced placeholder: {placeholder} with URL: {img_detail.url}")
+                if re.search(placeholder_pattern, updated_content):
+                    updated_content = re.sub(placeholder_pattern, img_detail.url, updated_content)
+                    # Add the alt text to the replaced set to avoid double replacement
+                    if img_detail.alt_text:
+                        replaced_alt_texts.add(img_detail.alt_text)
+                    logger.info(f"Replaced placeholder: {placeholder} with URL: {img_detail.url}")
 
-        return updated_content
+        return updated_content, replaced_alt_texts
 
     def _replace_img_tags(self, content: str, alt_to_image: Dict[str, ImageDetail]) -> str:
         """Replace src attributes in img tags based on matching alt text.

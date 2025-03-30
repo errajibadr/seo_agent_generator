@@ -1,4 +1,4 @@
-blog_post_prompt = """Génère un article SEO/GEO/AEO optimisé au format JSON avec les spécifications suivantes :
+blog_post_prompt_seo_v1_2 = """Génère un article SEO/GEO/AEO optimisé au format JSON avec les spécifications suivantes :
 
 INSTRUCTIONS TECHNIQUES :
 1. Format JSON avec échappement correct des caractères spéciaux
@@ -9,7 +9,7 @@ INSTRUCTIONS TECHNIQUES :
    - Structure de titres sous forme de questions naturelles (H1 > H2 > H3)
 3. Optimisation E-E-A-T renforcée
    - Citations de sources autoritaires (études, experts du domaine)
-   - Inclure 1 content_reference (url) qui semble pertinent pour le sujet (à choisir parmi ceux des mots-clés fournis)
+   - Inclure 1 content_reference qui semble pertinent pour le sujet depuis les mots-clés fournis
    - Dates récentes (2024-2025)
    - Mentions d'expertise professionnelle avec preuves d'expérience
    - Références locales et géographiques adaptées au sujet
@@ -22,7 +22,7 @@ INSTRUCTIONS TECHNIQUES :
 5. Métriques de contenu
    - Durée de lecture : 6-8 minutes
    - Densité de mots-clés : 1-2%
-   - Longueur optimale : 2500-3000 mots
+   - Longueur optimale : 1500-2000 mots
    - Readability score : 60-70 (Flesch)
 6. Optimisation pour extraction AI
    - Réponses directes et concises après chaque question-titre
@@ -145,11 +145,12 @@ CRITÈRES DE QUALITÉ :
    - Optimisation multiplateforme (mobile, desktop, voice)
 
 Ne remplir que les champs pour lesquels vous avez des informations pertinentes et fiables.
-Utiliser \n pour les sauts de section et \\" pour les guillemets dans le contenu HTML.
+Utiliser 
+ pour les sauts de section et \" pour les guillemets dans le contenu HTML.
 
-IMPORTANT: RESPECTER STRICTEMENT LA LIMITE DE 2500 MOTS. PRIORISER CONCISION ET CLARTÉ.
+IMPORTANT: RESPECTER STRICTEMENT LA LIMITE DE 1500 MOTS. PRIORISER CONCISION ET CLARTÉ.
 
-UTILISEZ LES MOTS-CLÉS FOURNIS: Intégrer naturellement les mots-clés fournis dans le format JSON, en respectant leur importance relative ( importance_in_cluster ) et l'intention de recherche associée ( intent ).
+UTILISEZ LES MOTS-CLÉS FOURNIS: Intégrer naturellement les mots-clés fournis dans le format JSON, en respectant leur importance relative et l'intention de recherche associée.
 
 Local : 
 Near me : {NearMe}
@@ -159,5 +160,5 @@ Near me : {NearMe}
 - Sinon garder la zone indéfinie sans en mentionner une en particulier
 
 MOTS-CLÉS CIBLES : 
-{keywords}
+{"cluster_name": "educateur canin marseille", "keywords": [{"primary_keyword": "educateur canin marseille", "importance_in_cluster": 0.5818181818181818, "intent": "Commercial", "volume": 320, "competition": 0.0, "content_references": ["https://educateur-canin-marseille.fr/", "https://www.ora-chiens.com/"]}, {"primary_keyword": "éducation canine marseille", "importance_in_cluster": 0.16363636363636364, "intent": "Commercial", "volume": 90, "competition": 0.0, "content_references": ["https://educateur-canin-marseille.fr/", "https://www.ora-chiens.com/"]}, {"primary_keyword": "dressage chien marseille", "importance_in_cluster": 0.12727272727272726, "intent": "Commercial", "volume": 70, "competition": 0.0, "content_references": ["https://educateur-canin-marseille.fr/", "https://www.ora-chiens.com/"]}, {"primary_keyword": "comportementaliste canin marseille", "importance_in_cluster": 0.12727272727272726, "intent": "Commercial", "volume": 70, "competition": 0.0, "content_references": ["https://educateur-canin-marseille.fr/", "https://www.ora-chiens.com/"]}]}
 """

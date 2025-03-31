@@ -1,0 +1,32 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Type Hints and Type Checking
+	•	Use built-in types for type hints in Python 3.9+ (⁠list[str] instead of ⁠typing.List[str]) following PEP 585 
+	•	For Python 3.8 or earlier, use ⁠from __future__ import annotations to enable the new syntax 
+	•	Consider Pylyzer, a fast Rust-based type checker, as an alternative to mypy for better performance 
+	•	Pyright is another excellent alternative that offers better performance than mypy and good IDE integration 
+	•	Include type checking in CI/CD pipelines alongside linting tools like Ruff 
+
+Code Style and Formatting
+	•	Follow PEP 8 style guide for consistent formatting, including 79-character line length, proper indentation, and whitespace usage
+	•	Use consistent naming conventions: snake_case for variables/functions, PascalCase for classes, and UPPER_CASE for constants
+	•	Use Ruff for fast, comprehensive linting that combines functionality of multiple tools 
+
+Documentation
+	•	Write docstrings for all functions, classes, and modules using a consistent format (Google, NumPy, or reStructuredText style)
+	•	Include "why" comments for complex logic, not just "what" the code does
+	•	Document type information in docstrings to complement type hints
+
+Code Structure
+	•	Follow the DRY principle (Don't Repeat Yourself) by creating reusable functions and classes
+	•	Keep functions small and focused on a single responsibility
+	•	Use meaningful variable names that clearly express purpose
+
+Testing
+	•	Write unit tests for all functions and classes
+	•	Use pytest or unittest frameworks for consistent testing patterns
+	•	Implement continuous integration to run tests automatically
+	•	Consider property-based testing for more comprehensive test coverage

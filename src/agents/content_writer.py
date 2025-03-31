@@ -11,6 +11,7 @@ from src.data.models import BlogArticle, ImageDetail, KeywordData
 from src.prompts.blog_post_prompt import blog_post_prompt
 from src.services.openrouter_service import OpenRouterService
 from src.utils.logger import get_logger
+from src.utils.text_utils import estimate_reading_time
 
 logger = get_logger(__name__)
 
@@ -95,6 +96,10 @@ class ContentWriter:
         # Extract image details from content
         image_details = self._extract_image_details(blog_json.get("Contenu article", ""))
 
+        # Estimate reading time from content
+        content_html = blog_json.get("Contenu article", "")
+        reading_time = f"{estimate_reading_time(content_html)} minutes"
+
         # Create blog article
         return BlogArticle(
             title=blog_json.get("Titre", ""),
@@ -102,9 +107,9 @@ class ContentWriter:
             publication_date=(
                 datetime.datetime.now() - datetime.timedelta(days=random.randint(1, 90))
             ).strftime("%d/%m/%Y"),
-            reading_time=blog_json.get("Durée de lecture", ""),
+            reading_time=reading_time,
             table_of_contents=blog_json.get("Table des matières", ""),
-            content=blog_json.get("Contenu article", ""),
+            content=content_html,
             article_type=blog_json.get("Type d'article", ""),
             article_types_secondary=blog_json.get("Type d'article 2-8", "").split(", "),
             article_summary=blog_json.get("Résumé de l'article", ""),

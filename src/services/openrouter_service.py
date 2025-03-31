@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from src.config import get_config
+from src.config import Config, get_config
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -16,18 +16,31 @@ logger = get_logger(__name__)
 class OpenRouterService:
     """Service for interacting with the OpenRouter API."""
 
-    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        config: Optional[Config] = None,
+    ):
         """Initialize the OpenRouter service.
 
         Args:
             api_key: API key for OpenRouter (defaults to config value)
             base_url: Base URL for OpenRouter API (defaults to config value)
         """
-        config = get_config()
-        self.api_key = api_key or config.api.openrouter_api_key
-        self.base_url = base_url or config.api.openrouter_base_url
-        self.default_model = config.default_model
-        self.timeout = config.api.http_timeout
+        self.config = config or get_config()
+        self.api_key = api_key or self.config.api.openrouter_api_key
+        self.base_url = base_url or self.config.api.openrouter_base_url
+
+        # Properties
+        self.default_model = self.config.default_model
+        self.timeout = self.config.api.http_timeout
+        self.temperature = self.config.default_model_params.get("temperature", 0.7)
+        self.max_tokens = self.config.default_model_params.get("max_tokens", 4000)
+        self.frequency_penalty = self.config.default_model_params.get("frequency_penalty", 0.0)
+        self.presence_penalty = self.config.default_model_params.get("presence_penalty", 0.0)
+        self.stop_sequences = self.config.default_model_params.get("stop_sequences", [])
+        self.top_p = self.config.default_model_params.get("top_p", 1.0)
 
         if not self.api_key:
             raise ValueError("OpenRouter API key is required")
@@ -87,8 +100,8 @@ class OpenRouterService:
         prompt: str,
         system_prompt: Optional[str] = None,
         model: Optional[str] = None,
-        temperature: float = 0.7,
-        max_tokens: int = 4000,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
     ) -> str:
         """Generate content using the OpenRouter API.
 
@@ -113,9 +126,15 @@ class OpenRouterService:
 
         payload = {
             "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
+            "temperature": temperature or self.temperature,
+            "max_tokens": max_tokens or self.max_tokens,
+            "top_p": self.top_p,
+            "frequency_penalty": self.frequency_penalty,
+            "presence_penalty": self.presence_penalty,
+            "stop_sequences": self.stop_sequences,
         }
+
+        payload = {k: v for k, v in payload.items() if v is not None}
 
         logger.info(f"Generating content with model: {model or self.default_model}")
 

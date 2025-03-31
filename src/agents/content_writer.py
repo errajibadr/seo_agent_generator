@@ -4,7 +4,7 @@ import datetime
 import json
 import random
 import re
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from src.config import get_config
 from src.data.models import BlogArticle, ImageDetail, KeywordData
@@ -20,17 +20,31 @@ class ContentWriter:
     """Agent for generating blog content."""
 
     def __init__(
-        self, openrouter_service: Optional[OpenRouterService] = None, near_me: Optional[str] = None
+        self,
+        openrouter_service: Optional[OpenRouterService] = None,
+        near_me: Optional[str] = None,
+        prompt_template: Optional[str] = None,
+        system_prompt: Optional[str] = None,
     ):
         """Initialize the content writer agent.
 
         Args:
             openrouter_service: Optional service for OpenRouter API
+            near_me: Optional location for local SEO
+            prompt_template: Optional custom prompt template (defaults to blog_post_prompt)
+            system_prompt: Optional custom system prompt
+            generation_params: Optional parameters for content generation (temperature, max_tokens, etc.)
         """
         self.service = openrouter_service or OpenRouterService()
         self.config = get_config()
         self.near_me = near_me
-        self.max_tokens = 6000
+        self.prompt_template = prompt_template or blog_post_prompt
+        self.system_prompt = system_prompt or (
+            "You are a professional SEO content writer. Create high-quality, "
+            "SEO-optimized blog content based on the provided instructions and keywords. "
+            "The output must be in valid JSON format following the structure specified in the prompt. "
+            "current date is {current_date}"
+        )
 
     def cluster_to_prompt_context(self, cluster_name: str, cluster_data: List[KeywordData]) -> dict:
         """Convert cluster data to prompt context.
@@ -58,7 +72,7 @@ class ContentWriter:
         """
         # Format the prompt with keyword data
         prompt_context = self.cluster_to_prompt_context(cluster_name, cluster_data)
-        formatted_prompt = blog_post_prompt.replace(
+        formatted_prompt = self.prompt_template.replace(
             "{keywords}", json.dumps(prompt_context, ensure_ascii=False)
         )
         if self.near_me:
@@ -66,23 +80,14 @@ class ContentWriter:
         else:
             formatted_prompt = formatted_prompt.replace("{NearMe}", "Not specified")
 
-        # Generate content
-        system_prompt = (
-            "You are a professional SEO content writer. Create high-quality, "
-            "SEO-optimized blog content based on the provided instructions and keywords. "
-            "The output must be in valid JSON format following the structure specified in the prompt. "
-            "current date is {current_date}"
-            "You have a max token of {max_tokens}"
-        ).format(
-            current_date=datetime.datetime.now().strftime("%Y-%m-%d"), max_tokens=self.max_tokens
+        # Format system prompt
+        formatted_system_prompt = self.system_prompt.format(
+            current_date=datetime.datetime.now().strftime("%Y-%m-%d")
         )
 
         logger.info(f"Generating blog for cluster: {cluster_name}")
         content = await self.service.generate_content(
-            prompt=formatted_prompt,
-            system_prompt=system_prompt,
-            temperature=0.7,
-            max_tokens=self.max_tokens,
+            prompt=formatted_prompt, system_prompt=formatted_system_prompt
         )
 
         # Extract JSON content

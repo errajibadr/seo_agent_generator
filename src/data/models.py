@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 class KeywordData(BaseModel):
     """Model for keyword data from CSV input."""
 
-    database: str
+    database: str = Field(default="fr")
     keyword: str
     seed_keyword: Optional[str] = None
     page: Optional[str] = None

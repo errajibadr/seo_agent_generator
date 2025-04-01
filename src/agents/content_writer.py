@@ -11,7 +11,7 @@ from src.data.models import BlogArticle, ImageDetail, KeywordData
 from src.prompts.blog_post_prompt import blog_post_prompt
 from src.services.openrouter_service import OpenRouterService
 from src.utils.logger import get_logger
-from src.utils.text_utils import estimate_reading_time
+from src.utils.text_utils import estimate_reading_time, slugify
 
 logger = get_logger(__name__)
 
@@ -108,7 +108,7 @@ class ContentWriter:
         # Create blog article
         return BlogArticle(
             title=blog_json.get("Titre", ""),
-            slug=blog_json.get("Slug", ""),
+            slug=slugify(blog_json.get("Titre", "")),
             publication_date=(
                 datetime.datetime.now() - datetime.timedelta(days=random.randint(1, 90))
             ).strftime("%d/%m/%Y"),

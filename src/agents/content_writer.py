@@ -4,7 +4,7 @@ import datetime
 import json
 import random
 import re
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from src.config import get_config
 from src.data.models import BlogArticle, ImageDetail, KeywordData

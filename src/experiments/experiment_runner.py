@@ -4,13 +4,12 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 from src.agents.content_writer import BlogArticle, ContentWriter
+from src.config import Config
 from src.data.models import KeywordData
 from src.evaluators.content_evaluator import ContentEvaluator
 from src.experiments.experiment_config import ExperimentConfig, ModelConfig, PromptConfig
 from src.services.openrouter_service import OpenRouterService
 from src.utils.logger import get_logger
-
-from ..config import Config
 
 logger = get_logger(__name__)
 

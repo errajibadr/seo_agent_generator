@@ -46,6 +46,9 @@ run:
 run_image:
 	$(PYTHON) -m src.services.image_api_service
 
+run_xp:
+	$(PYTHON) run_experiment.py
+
 # Help information
 help:
 	@echo "Available commands:"

@@ -1,6 +1,7 @@
 """Text utilities for the SEO blog generator."""
 
 import math
+import re
 from typing import Union
 
 from bs4 import BeautifulSoup
@@ -52,3 +53,22 @@ def estimate_reading_time(
     if round_up:
         return math.ceil(reading_time)
     return round(reading_time)
+
+
+def sanitize_filename(name: str) -> str:
+    """Sanitize a name to be used as a filename.
+
+    Args:
+        name: Name to sanitize
+
+    Returns:
+        Sanitized name safe for use as a filename
+    """
+    # Replace characters that are invalid in filenames
+    # Replace : / \ * ? " < > | with _
+    sanitized = re.sub(r'[:\\/*?"<>|]', "_", name)
+
+    # Also replace spaces with underscores for better compatibility
+    sanitized = sanitized.replace(" ", "_")
+
+    return sanitized

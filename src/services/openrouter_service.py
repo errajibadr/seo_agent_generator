@@ -128,10 +128,10 @@ class OpenRouterService:
             "messages": messages,
             "temperature": temperature or self.temperature,
             "max_tokens": max_tokens or self.max_tokens,
-            "top_p": self.top_p,
-            "frequency_penalty": self.frequency_penalty,
-            "presence_penalty": self.presence_penalty,
-            "stop_sequences": self.stop_sequences,
+            # "top_p": self.top_p,
+            # "frequency_penalty": self.frequency_penalty,
+            # "presence_penalty": self.presence_penalty,
+            # "stop_sequences": self.stop_sequences,
         }
 
         payload = {k: v for k, v in payload.items() if v is not None}
@@ -146,7 +146,7 @@ class OpenRouterService:
             return content
         except (KeyError, IndexError) as e:
             logger.error(f"Error parsing response: {e}")
-            logger.debug(f"Response: {json.dumps(response)}")
+            logger.error(f"Response: {json.dumps(response)}")
             raise ValueError("Invalid response from API")
 
     async def extract_json_from_response(self, content: str) -> Dict[str, Any]:

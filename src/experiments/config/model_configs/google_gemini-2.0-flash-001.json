@@ -1,0 +1,9 @@
+{
+  "name": "google/gemini-2.0-flash-001",
+  "temperature": 0.7,
+  "max_tokens": 3000,
+  "top_p": 1.0,
+  "frequency_penalty": 0.0,
+  "presence_penalty": 0.0,
+  "stop_sequences": []
+}

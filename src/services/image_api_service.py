@@ -56,7 +56,7 @@ class ImageAPIService:
         endpoint: str,
         payload: Dict[str, Any],
         headers: Optional[Dict[str, str]] = None,
-    ) -> Dict[str, Any]:
+    ) -> list[Dict[str, Any]]:
         """Make an API request to the image service.
 
         Args:
@@ -132,9 +132,12 @@ class ImageAPIService:
 
             # Make the API request to generate content
             model_id = "gemini-2.0-flash-exp-image-generation"
-            endpoint = f"models/{model_id}:generateContent"
+            endpoint = f"models/{model_id}:streamGenerateContent"
 
             response = await self._make_api_request(endpoint, payload)
+
+            if isinstance(response, list):
+                response = response[0]
 
             # Process the response to extract image data
             if not response or "candidates" not in response or not response["candidates"]:
